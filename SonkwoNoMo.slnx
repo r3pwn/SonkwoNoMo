@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="SonkwoNoMo.Server/SonkwoNoMo.Server.csproj" Id="acf1a0d7-88ee-499d-a49e-99c10792035a" />
+  <Project Path="SonkwoNoMo.Client/SonkwoNoMo.Client.csproj" />
+  <Project Path="SonkwoSniffer/SonkwoSniffer.csproj" Id="b55d014f-45ad-4895-ba0b-4bd19ebee17a" />
+</Solution>

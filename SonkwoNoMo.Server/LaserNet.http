@@ -1,0 +1,6 @@
+@LaserNet_HostAddress = http://localhost:5118
+
+GET {{LaserNet_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
