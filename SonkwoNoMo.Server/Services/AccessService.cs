@@ -2,6 +2,8 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
+using MessagePack;
+using SonkwoNoMo.Server.Models;
 
 namespace SonkwoNoMo.Server.Services;
 
@@ -9,6 +11,7 @@ public sealed class AccessService(ILogger<AccessService> logger) : BackgroundSer
 {
     private const int Port = 4444;
     private TcpListener? _listener;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _listener = new TcpListener(IPAddress.Any, Port);
@@ -72,7 +75,7 @@ public sealed class AccessService(ILogger<AccessService> logger) : BackgroundSer
                     $"Payload ({payload.Length} bytes): " +
                     Convert.ToHexString(payload));
 
-                var value = MessagePack.MessagePackSerializer.Deserialize<object>(payload, cancellationToken: ct);
+                var value = MessagePackSerializer.Deserialize<AccessPacket>(payload, cancellationToken: ct);
 
                 Console.WriteLine(JsonSerializer.Serialize(value));
 
@@ -81,24 +84,27 @@ public sealed class AccessService(ILogger<AccessService> logger) : BackgroundSer
                     return;
                 }
 
-                // I have no idea why this does not work
-                var response = new Dictionary<string, object?>
+                if (value.Op != 2)
                 {
-                    ["op"] = 3,
-                    ["sop"] = 0,
-                    ["para_list"] = new List<object>
-                    {
+                    continue;
+                }
+
+                var loginSuccess = new AccessPacket
+                {
+                    Op = 3,
+                    ParaList =
+                    [
                         new Dictionary<string, object>
                         {
                             ["key"] = "ret",
                             ["type"] = 1,
                             ["ival"] = 1
                         }
-                    }
+                    ]
                 };
 
                 var responsePayload =
-                    MessagePack.MessagePackSerializer.Serialize(response);
+                    MessagePackSerializer.Serialize(loginSuccess);
 
                 await SendPacket(stream, 27, responsePayload, ct);
             }
@@ -143,7 +149,6 @@ public sealed class AccessService(ILogger<AccessService> logger) : BackgroundSer
         BinaryPrimitives.WriteUInt32LittleEndian(
             header.AsSpan(4, 4),
             command);
-
 
         Console.WriteLine(
             $"Sending response: {Convert.ToHexString(header)}{Convert.ToHexString(payload)}"
