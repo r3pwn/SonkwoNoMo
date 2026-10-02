@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
 using MessagePack;
+using SonkwoNoMo.Server.Handlers;
 using SonkwoNoMo.Server.Models;
 
 namespace SonkwoNoMo.Server.Services;
@@ -71,40 +72,21 @@ public sealed class AccessService(ILogger<AccessService> logger) : BackgroundSer
                 if (payload == null)
                     break;
 
-                Console.WriteLine(
-                    $"Payload ({payload.Length} bytes): " +
-                    Convert.ToHexString(payload));
-
                 var value = MessagePackSerializer.Deserialize<AccessPacket>(payload, cancellationToken: ct);
 
-                Console.WriteLine(JsonSerializer.Serialize(value));
+                Console.WriteLine($"Received packet: {JsonSerializer.Serialize(value)}");
 
-                if (command != 26)
-                {
-                    return;
-                }
+                var response = await AccessPacketHandler.HandleAsync(value, ct);
 
-                if (value.Op != 2)
+                if (response == null)
                 {
                     continue;
                 }
 
-                var loginSuccess = new AccessPacket
-                {
-                    Op = 3,
-                    ParaList =
-                    [
-                        new Dictionary<string, object>
-                        {
-                            ["key"] = "ret",
-                            ["type"] = 1,
-                            ["ival"] = 1
-                        }
-                    ]
-                };
+                Console.WriteLine($"Sending packet: {JsonSerializer.Serialize(response)}");
 
                 var responsePayload =
-                    MessagePackSerializer.Serialize(loginSuccess);
+                    MessagePackSerializer.Serialize(response);
 
                 await SendPacket(stream, 27, responsePayload, ct);
             }
@@ -149,10 +131,6 @@ public sealed class AccessService(ILogger<AccessService> logger) : BackgroundSer
         BinaryPrimitives.WriteUInt32LittleEndian(
             header.AsSpan(4, 4),
             command);
-
-        Console.WriteLine(
-            $"Sending response: {Convert.ToHexString(header)}{Convert.ToHexString(payload)}"
-        );
 
         await stream.WriteAsync(header, ct);
         await stream.WriteAsync(payload, ct);
