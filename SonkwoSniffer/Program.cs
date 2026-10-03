@@ -66,25 +66,20 @@ static unsafe void Handle37(nint p)
 {
     var count = *(uint*)p;
 
-    Console.WriteLine($"    server_count: {count}");
+    Console.WriteLine($"    available_regions: {count}");
 
-    var cursor = (byte*)p + sizeof(uint);
+    var stringPtr = (byte*)p + sizeof(uint);
 
-    for (uint i = 0; i < count; i++)
-    {
-        var serverName = Marshal.PtrToStringAnsi((nint)cursor);
+    var stringLength = 0;
 
-        Console.WriteLine(
-            $"      server[{i}]: {serverName}");
+    while (stringPtr[stringLength] != 0)
+        stringLength++;
 
-        // Advance past the string and its null terminator.
-        while (*cursor != 0)
-            cursor++;
+    Console.WriteLine(
+        $"    default_region: {Marshal.PtrToStringAnsi((nint)stringPtr)}");
 
-        cursor++;
-    }
-
-    Hexdump(p, (int)(cursor - (byte*)p));
+    // Include the NUL terminator.
+    Hexdump(p, sizeof(uint) + stringLength + 1);
 }
 
 static unsafe void Hexdump(nint p, int length)
