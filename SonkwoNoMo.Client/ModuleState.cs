@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 
-namespace SonkwoNoMo
+namespace SonkwoNoMo.Client
 {
     public enum SkEventType : ushort
     {
@@ -20,22 +20,22 @@ namespace SonkwoNoMo
     {
         public ushort Type;
         public ushort Subtype;
-        public short Field2;
-        public object Payload;
+        public uint Field2;
+        public SkPayload Payload;
     }
 
-    public enum SkUserEventSubtype : ushort
+    [StructLayout(LayoutKind.Explicit, Size = 32)]
+    public unsafe struct SkPayload
     {
-        NonAdult = 0,
-        Adult = 1,
-    }
+        [FieldOffset(0)]
+        public nint Pointer;
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct SkUserEventData
-    {
-        public short OnlineTime;
-    }
+        [FieldOffset(0)]
+        public uint Count;
 
+        [FieldOffset(0)]
+        public fixed byte Raw[32];
+    }
 
     internal static class ModuleState
     {

@@ -9,7 +9,7 @@ Console.WriteLine("sk_set_game_path()");
 
 //Console.WriteLine($"Current PID: {Environment.ProcessId}");
 var steamInitResult = NativeMethods.SkSteamInit(
-    "1400000058AF1C2E68012DBA91298209010010010130926A18000000010000000200000094B16DCA4DE05860240A030001000000B8000000380000000400000091298209010010015CB40800697F110801501FAC00000000CDB18C6A4D61A86A0100F134020001004ADD190000000000427D2CF352EFC23D12B944CB679E796D76B5F774D379609D22C1EDBD2E1A9F14BEDDCF5996C39517970FB5BA77D5BC2F1B932A6087118DDC98817CC84AE004C1B15B336B73E3EA42E2185C2FDBDD565FE03EA653218FA47EF53DEBA2970F6E8BEBDDEC920D4F632E0C680CD56BE6928F538E932AED0CAD3D1F345AB26B5E3C4E", 
+    "--REDACTED--", 
     "570460",
     "76561198119790993", 
     "2.0.0", 
@@ -29,12 +29,86 @@ for (var i = 0; i < 30; i++)
 return;
 
 [UnmanagedCallersOnly]
-static unsafe void HandleEvent(IntPtr ctx, ushort eventType, SkEvent* @event)
+static void HandleEvent(IntPtr ctx, ushort eventType, nint eventPtr)
 {
+    var header = Marshal.PtrToStructure<SkEventHeader>(eventPtr);
+
     Console.WriteLine("event_callback:");
-    Console.WriteLine($"    context: {ctx}");
-    Console.WriteLine($"    type: {eventType}");
-    Console.WriteLine($"    subtype: {@event->Subtype}");
-    Console.WriteLine($"    Field2: {@event->Field2}");
-    Console.WriteLine($"    payload: {@event->Payload}");
+    Console.WriteLine($"    context: 0x{ctx:X}");
+    Console.WriteLine($"    callback type: {eventType}");
+    Console.WriteLine($"    event Type: {header.Type}");
+    Console.WriteLine($"    subtype: 0x{header.Subtype:X2}");
+    Console.WriteLine($"    Field2: 0x{header.Field2:X8}");
+
+    var payloadPtr = eventPtr + 0x8;
+    switch (header.Subtype)
+    {
+        case 0x30:
+            Handle30(payloadPtr);
+            break;
+
+        case 0x37:
+            Handle37(payloadPtr);
+            break;
+
+        default:
+            Hexdump(eventPtr, 0x100);
+            break;
+    }
+}
+
+static unsafe void Handle30(nint p)
+{
+    Console.WriteLine("    [0x30] - No payload");
+}
+
+static unsafe void Handle37(nint p)
+{
+    var count = *(uint*)p;
+
+    Console.WriteLine($"    server_count: {count}");
+
+    var cursor = (byte*)p + sizeof(uint);
+
+    for (uint i = 0; i < count; i++)
+    {
+        var serverName = Marshal.PtrToStringAnsi((nint)cursor);
+
+        Console.WriteLine(
+            $"      server[{i}]: {serverName}");
+
+        // Advance past the string and its null terminator.
+        while (*cursor != 0)
+            cursor++;
+
+        cursor++;
+    }
+
+    Hexdump(p, (int)(cursor - (byte*)p));
+}
+
+static unsafe void Hexdump(nint p, int length)
+{
+    for (var offset = 0; offset < length; offset += 0x10)
+    {
+        Console.Write($"    {offset:X4}: ");
+
+        for (var i = 0; i < 0x10; i++)
+        {
+            var b = *((byte*)p + offset + i);
+            Console.Write($"{b:X2} ");
+        }
+
+        Console.Write(" ");
+
+        for (var i = 0; i < 0x10; i++)
+        {
+            var b = *((byte*)p + offset + i);
+            Console.Write(b is >= 0x20 and <= 0x7E
+                ? (char)b
+                : '.');
+        }
+
+        Console.WriteLine();
+    }
 }

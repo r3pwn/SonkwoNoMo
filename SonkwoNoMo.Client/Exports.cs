@@ -1,18 +1,9 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace SonkwoNoMo;
-
-/*internal enum InitStatus
-{
-    Uninitialized,
-    Pending,
-    Initialized
-}*/
+namespace SonkwoNoMo.Client;
 
 public static unsafe class Exports
 {
-    // private static InitStatus status;
-
     [UnmanagedCallersOnly(EntryPoint = "sk_tick")]
     public static uint SkTick(nint eventContext, delegate* unmanaged<nint, ushort, SkEvent*, void> eventCallback)
     {
@@ -61,30 +52,11 @@ public static unsafe class Exports
 
             ModuleState.Queue.Enqueue(
                 7,
-                48,
-                0,
-                0x8000003030390000);
+                0x30,
+                1,
+                new SkPayload { Pointer = IntPtr.Zero });
 
             return 0;
-            /*if (status == InitStatus.Initialized)
-            {
-                return 0;
-            }
-
-            if (status != InitStatus.Pending)
-            {
-                // Wait 1 second, then change the status to Initialized.
-                // This is certainly one unusual hack. I'm not sure how
-                // or why it works, but it does.
-                _ = Task.Run(() =>
-                {
-                    Task.Delay(TimeSpan.FromSeconds(1))
-                        .ContinueWith(_ => { status = InitStatus.Initialized; });
-                });
-            }
-
-            // Return an error status
-            return 0xfffffffb;*/
         }
         catch (Exception ex)
         {
@@ -171,10 +143,5 @@ public static unsafe class Exports
     private static void FreeEvent(SkEvent* eventPtr)
     {
         Marshal.FreeHGlobal((nint)eventPtr);
-    }
-
-    private static nint AllocUtf8(string value)
-    {
-        return Marshal.StringToCoTaskMemUTF8(value);
     }
 }

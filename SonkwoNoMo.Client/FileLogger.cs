@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-namespace SonkwoNoMo;
+﻿namespace SonkwoNoMo.Client;
 
 public static class FileLogger
 {
