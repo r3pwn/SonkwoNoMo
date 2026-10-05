@@ -1,11 +1,15 @@
-﻿namespace SonkwoNoMo.Client;
+﻿namespace SonkwoNoMo.Client.Utils.Logging;
 
-public static class FileLogger
+public class FileLogger : ILogger
 {
-    private static readonly string LogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SonkwoNoMo_log.txt");
-    private static readonly Lock LockObject = new Lock();
+    private static readonly string LogPath = Path.Combine(PathHelper.BasePath, "debug_log.txt");
+    private static readonly Lock LockObject = new();
 
-    public static void Log(string message)
+    public void Start() { }
+
+    public void Stop() { }
+
+    public void Log(string message)
     {
         try
         {

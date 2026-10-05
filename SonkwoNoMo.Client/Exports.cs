@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using SonkwoNoMo.Client.Utils;
 
 namespace SonkwoNoMo.Client;
 
@@ -14,7 +15,7 @@ public static unsafe class Exports
 
         while (ModuleState.Queue.TryDequeue(out var ev))
         {
-            FileLogger.Log($"[Log] sk_tick: executing callback for event with params {eventContext}:{ev->Type}:{ev->Subtype}:{ev->Field2}:{ev->Payload}");
+            LoggerManager.Instance.Log($"sk_tick: executing callback for event with params {eventContext}:{ev->Type}:{ev->Subtype}:{ev->Field2}:{ev->Payload}");
             eventCallback(
                 eventContext,
                 ev->Type,
@@ -37,7 +38,7 @@ public static unsafe class Exports
             var s3 = GetString(buildId);
             var s4 = GetString(gameVersion);
 
-            FileLogger.Log($"[Log] sk_steam_init: '{s1}', '{s2}', '{s3}', '{s4}', {isTestBuild}");
+            LoggerManager.Instance.Log($"sk_steam_init: '{s1}', '{s2}', '{s3}', '{s4}', {isTestBuild}");
 
             if (ModuleState.SteamInitialized)
             {
@@ -61,7 +62,7 @@ public static unsafe class Exports
         catch (Exception ex)
         {
             // UnmanagedCallersOnly methods MUST NOT let exceptions escape to native code
-            FileLogger.Log($"[Error] Exception in export: {ex.Message}");
+            LoggerManager.Instance.Log($"[Error] Exception in export: {ex.Message}");
             return 0xffffffff;
         }
     }
@@ -70,34 +71,35 @@ public static unsafe class Exports
     public static void SkSetGamePath(byte* gamePath)
     {
         var path = GetString(gamePath);
-        FileLogger.Log($"[Log] sk_set_game_path: {path}");
+        LoggerManager.Instance.Log($"sk_set_game_path: {path}");
         ModuleState.GamePath = path;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "sk_init")]
     public static int SkInit()
     {
-        FileLogger.Log($"[Log] sk_init");
+        LoggerManager.Instance.Log("sk_init");
         return 0;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "sk_destroy")]
     public static void SkDestroy()
     {
-        FileLogger.Log($"[Log] sk_destroy");
+        LoggerManager.Instance.Log("sk_destroy");
+        LoggerManager.Instance.Stop();
     }
 
     [UnmanagedCallersOnly(EntryPoint = "sk_get_region_list_ping_ttl")]
     public static int SkGetRegionListPingTtl()
     {
-        FileLogger.Log($"[Log] sk_get_region_list_ping_ttl");
+        LoggerManager.Instance.Log("sk_get_region_list_ping_ttl");
         return 1;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "sk_get_overlay_status")]
     public static int SkGetOverlayStatus()
     {
-        FileLogger.Log($"[Log] sk_get_overlay_status");
+        LoggerManager.Instance.Log("sk_get_overlay_status");
         return 0;
     }
 
@@ -107,7 +109,7 @@ public static unsafe class Exports
         try
         {
             var regionStr = GetString(region);
-            FileLogger.Log($"[Log] sk_select_region: {regionStr}");
+            LoggerManager.Instance.Log($"sk_select_region: {regionStr}");
 
             return 0;
         }
@@ -117,21 +119,21 @@ public static unsafe class Exports
     [UnmanagedCallersOnly(EntryPoint = "sk_get_user_info")]
     public static int SkGetUserInfo()
     {
-        FileLogger.Log($"[Log] sk_get_user_info");
+        LoggerManager.Instance.Log("sk_get_user_info");
         return 0;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "sk_get_version")]
     public static int SkGetVersion()
     {
-        FileLogger.Log($"[Log] sk_get_version");
+        LoggerManager.Instance.Log("sk_get_version");
         return 0x10000;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "sk_create_party")]
     public static int SkCreateParty()
     {
-        FileLogger.Log($"[Log] sk_create_party");
+        LoggerManager.Instance.Log("sk_create_party");
         return 0;
     }
 
