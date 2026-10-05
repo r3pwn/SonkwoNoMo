@@ -3,17 +3,6 @@ using System.Runtime.InteropServices;
 
 namespace SonkwoNoMo.Client
 {
-    public enum SkEventType : ushort
-    {
-        Unknown = 0xFFFF,
-
-        Event = 0,
-        User = 5,
-        Quit = 6,
-        Broadcast = 7,
-        Command = 8,
-    }
-
 
     [StructLayout(LayoutKind.Sequential)]
     public struct SkEvent

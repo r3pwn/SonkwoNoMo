@@ -20,9 +20,6 @@ public class EventQueue
         _queue.Enqueue(eventPtr);
     }
 
-    public void Enqueue(SkEventType type, ushort subtype, uint reserved, SkPayload data) =>
-        Enqueue((ushort)type, subtype, reserved, data);
-
     public unsafe bool TryDequeue(out SkEvent* skEvent)
     {
         if (!_queue.TryDequeue(out var eventPtr) || eventPtr == 0)
