@@ -32,7 +32,7 @@ jobs:
         run: dotnet publish SonkwoNoMo.Client/SonkwoNoMo.Client.csproj `
           -c Release `
           -r win-x64 `
-          --self-contained false `
+          --self-contained true `
           -o "${{ github.workspace }}/publish"
 
       - name: Prepare package
