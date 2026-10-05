@@ -1,0 +1,73 @@
+name: Build Client
+
+on:
+  push:
+    # branches:
+    #  - main
+    tags:
+      - "v*"
+  pull_request:
+    paths:
+      - "SonkwoNoMo.Client/**"
+      - ".github/workflows/build-client.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Publish client
+        run: dotnet publish SonkwoNoMo.Client/SonkwoNoMo.Client.csproj `
+          -c Release `
+          -r win-x64 `
+          --self-contained false `
+          -o "${{ github.workspace }}/publish"
+
+      - name: Prepare package
+        shell: pwsh
+        run: |
+          $package = "${{ github.workspace }}/package"
+
+          New-Item -ItemType Directory -Force -Path `
+            "$package/Engine/Binaries/ThirdParty/Sonkwo/client/x64/Release" | Out-Null
+
+          Copy-Item `
+            "${{ github.workspace }}/publish/SonkwoNoMo.Client.dll" `
+            "$package/Engine/Binaries/ThirdParty/Sonkwo/client/x64/Release/MMClientSDK.dll"
+
+          Copy-Item `
+            "${{ github.workspace }}/SonkwoNoMo.Client/default.config.ini" `
+            "$package/default.config.ini"
+
+      - name: Create archive
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path "${{ github.workspace }}/package/*" `
+            -DestinationPath "${{ github.workspace }}/SonkwoNoMo.Client.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: SonkwoNoMo.Client
+          path: SonkwoNoMo.Client.zip
+
+      - name: Create GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v3
+        with:
+          files: SonkwoNoMo.Client.zip
+          prerelease: true
+          generate_release_notes: true
