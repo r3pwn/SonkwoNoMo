@@ -62,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: SonkwoNoMo.Client
-          path: SonkwoNoMo.Client.zip
+          path: package/
 
       - name: Create GitHub Release
         if: github.ref_type == 'tag'
