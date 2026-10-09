@@ -1,4 +1,4 @@
-﻿namespace SonkwoNoMo.Server.Config;
+﻿namespace SonkwoNoMo.Server.Gateway.Config;
 
 public record RegionEntry
 {

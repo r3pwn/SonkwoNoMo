@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using System.Text;
 using System.Text.Json;
 
-namespace SonkwoNoMo.Server.Attributes;
+namespace SonkwoNoMo.Server.Gateway.Attributes;
 
 public class XorResponseAttribute : Attribute, IAsyncResultFilter
 {

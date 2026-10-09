@@ -1,0 +1,19 @@
+{
+  "profiles": {
+    "SonkwoNoMo.Server.Access": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "httpPort": 4444
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json"
+}

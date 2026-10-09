@@ -1,25 +1,27 @@
-﻿using System.Buffers.Binary;
+﻿using Microsoft.Extensions.Options;
+using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
 using MessagePack;
-using SonkwoNoMo.Server.Handlers;
-using SonkwoNoMo.Server.Models;
+using SonkwoNoMo.Server.Access.Config;
+using SonkwoNoMo.Server.Access.Handlers;
+using SonkwoNoMo.Server.Access.Models;
 
-namespace SonkwoNoMo.Server.Services;
+namespace SonkwoNoMo.Server.Access.Services;
 
-public sealed class AccessService(ILogger<AccessService> logger) : BackgroundService
+public sealed class AccessService(ILogger<AccessService> logger, IOptions<AccessOptions> accessOptions) : BackgroundService
 {
-    private const int Port = 4444;
     private TcpListener? _listener;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _listener = new TcpListener(IPAddress.Any, Port);
+        var port = accessOptions.Value.Port;
+        _listener = new TcpListener(IPAddress.Any, port);
         _listener.Start();
 
         logger.LogInformation(
-            $"Access TCP server listening on 0.0.0.0:{Port}");
+            $"Access TCP server listening on 0.0.0.0:{port}");
 
         try
         {

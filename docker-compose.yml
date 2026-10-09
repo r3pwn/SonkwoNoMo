@@ -1,0 +1,18 @@
+services:
+  sonkwonomo.server.gateway:
+    image: ${DOCKER_REGISTRY-}sonkwonomoservergateway
+    build:
+      context: .
+      dockerfile: SonkwoNoMo.Server.Gateway/Dockerfile
+    environment:
+      - ASPNETCORE_HTTP_PORTS=5118
+    ports:
+      - "5118:5118"
+
+  sonkwonomo.server.access:
+    image: ${DOCKER_REGISTRY-}sonkwonomoserveraccess
+    build:
+      context: .
+      dockerfile: SonkwoNoMo.Server.Access/Dockerfile
+    ports:
+      - "4444:4444"

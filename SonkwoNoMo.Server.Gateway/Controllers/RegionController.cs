@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using SonkwoNoMo.Server.Attributes;
-using SonkwoNoMo.Server.Config;
-using SonkwoNoMo.Server.Models;
+using SonkwoNoMo.Server.Gateway.Attributes;
+using SonkwoNoMo.Server.Gateway.Config;
+using SonkwoNoMo.Server.Gateway.Models;
 
-namespace SonkwoNoMo.Server.Controllers;
+namespace SonkwoNoMo.Server.Gateway.Controllers;
 
 [ApiController]
 [Route("/api/")]

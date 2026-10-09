@@ -1,6 +1,6 @@
-﻿using SonkwoNoMo.Server.Models;
+﻿using SonkwoNoMo.Server.Access.Models;
 
-namespace SonkwoNoMo.Server.Handlers;
+namespace SonkwoNoMo.Server.Access.Handlers;
 
 public static class AccessPacketHandler
 {

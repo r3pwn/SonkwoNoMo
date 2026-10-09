@@ -10,14 +10,15 @@ This project is a work in progress. The goal is to restore as much of the origin
 This repository contains the following projects:
 
 - **SonkwoNoMo.Client**: Client-side components required to connect Laser League to the replacement services.
-- **SonkwoNoMo.Server**: Replacement region advertisement and access services required by the game.
+- **SonkwoNoMo.Server.Gateway**: The replacement region advertisement service used by the game to discover regions and access services.
+- **SonkwoNoMo.Server.Access**: The replacement access service the game connects to; typically hosted once per region.
 - **SonkwoSniffer**: Development tooling used while investigating the original game's network behavior.
 
 See the README in each project for project-specific information and configuration.
 
 ## Getting started
 
-If you're looking to host your own server, start with the Server README.
+If you're looking to host your own server, start with the Server README in `SonkwoNoMo.Server.Gateway`.
 
 If you're working with the client, see the Client README.
 

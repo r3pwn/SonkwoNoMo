@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace SonkwoNoMo.Server.Models;
+namespace SonkwoNoMo.Server.Gateway.Models;
 
 public class RegionListResponse
 {

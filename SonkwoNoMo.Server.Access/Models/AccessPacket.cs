@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using MessagePack;
 
-namespace SonkwoNoMo.Server.Models;
+namespace SonkwoNoMo.Server.Access.Models;
 
 [MessagePackObject]
 public class AccessPacket
