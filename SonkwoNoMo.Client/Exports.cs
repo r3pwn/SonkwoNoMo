@@ -3,10 +3,10 @@ using SonkwoNoMo.Client.Utils;
 
 namespace SonkwoNoMo.Client;
 
-public static unsafe class Exports
+public static class Exports
 {
     [UnmanagedCallersOnly(EntryPoint = "sk_tick")]
-    public static uint SkTick(nint eventContext, delegate* unmanaged<nint, ushort, SkEvent*, void> eventCallback)
+    public static unsafe uint SkTick(nint eventContext, delegate* unmanaged<nint, ushort, SkEvent*, void> eventCallback)
     {
         if (!ModuleState.SteamInitialized)
         {
@@ -21,14 +21,14 @@ public static unsafe class Exports
                 ev->Type,
                 ev);
 
-            FreeEvent(ev);
+            Marshal.FreeHGlobal((nint)ev);
         }
 
         return 0;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "sk_steam_init")]
-    public static uint SkSteamInit(byte* authToken, byte* gameId, byte* buildId, byte* gameVersion, int isTestBuild)
+    public static unsafe uint SkSteamInit(byte* authToken, byte* gameId, byte* buildId, byte* gameVersion, int isTestBuild)
     {
         try
         {
@@ -42,6 +42,7 @@ public static unsafe class Exports
 
             if (ModuleState.SteamInitialized)
             {
+                // "already initialized" error
                 return 0xfffffffb;
             }
 
@@ -50,12 +51,15 @@ public static unsafe class Exports
             ModuleState.BuildId = s3;
             ModuleState.GameVersion = s4;
             ModuleState.SteamInitialized = true;
+            // RegionList.Refresh();
 
             ModuleState.Queue.Enqueue(
                 7,
                 0x30,
                 1,
                 new SkPayload { Pointer = IntPtr.Zero });
+
+            _ = RefreshRegionsAndQueueEventAsync();
 
             return 0;
         }
@@ -68,7 +72,7 @@ public static unsafe class Exports
     }
 
     [UnmanagedCallersOnly(EntryPoint = "sk_set_game_path")]
-    public static void SkSetGamePath(byte* gamePath)
+    public static unsafe void SkSetGamePath(byte* gamePath)
     {
         var path = GetString(gamePath);
         LoggerManager.Instance.Log($"sk_set_game_path: {path}");
@@ -93,6 +97,8 @@ public static unsafe class Exports
     public static int SkGetRegionListPingTtl()
     {
         LoggerManager.Instance.Log("sk_get_region_list_ping_ttl");
+        _ = RefreshRegionsAndQueueEventAsync();
+
         return 1;
     }
 
@@ -104,13 +110,14 @@ public static unsafe class Exports
     }
 
     [UnmanagedCallersOnly(EntryPoint = "sk_select_region")]
-    public static long SkSelectRegion(byte* region)
+    public static unsafe long SkSelectRegion(byte* region)
     {
         try
         {
             var regionStr = GetString(region);
             LoggerManager.Instance.Log($"sk_select_region: {regionStr}");
 
+            RegionList.SelectedRegion = regionStr;
             return 0;
         }
         catch { return -1; }
@@ -137,13 +144,27 @@ public static unsafe class Exports
         return 0;
     }
 
-    private static string GetString(byte* charPtr)
+    private static async Task RefreshRegionsAndQueueEventAsync()
     {
-        return Marshal.PtrToStringAnsi((IntPtr)charPtr) ?? string.Empty;
+        try
+        {
+            await RegionList.Refresh();
+
+            ModuleState.Queue.Enqueue(
+                7,
+                0x37,
+                0,
+                RegionList.AsPayload());
+        }
+        catch (Exception ex)
+        {
+            LoggerManager.Instance.Log(
+                $"[Error] Region refresh failed: {ex}");
+        }
     }
 
-    private static void FreeEvent(SkEvent* eventPtr)
+    private static unsafe string GetString(byte* charPtr)
     {
-        Marshal.FreeHGlobal((nint)eventPtr);
+        return Marshal.PtrToStringAnsi((IntPtr)charPtr) ?? string.Empty;
     }
 }

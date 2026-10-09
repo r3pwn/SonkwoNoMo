@@ -1,13 +1,9 @@
 ﻿using SonkwoSniffer;
 using System.Runtime.InteropServices;
 
-Console.WriteLine("Hello, World!");
-// NativeMethods.SkInit();
-// Console.WriteLine("sk_init()");
 NativeMethods.SkSetGamePath(@"C:\Program Files (x86)\Steam\steamapps\common\Laser League\GameProject\Binaries\Win64\GameProject-Win64-Shipping.exe");
 Console.WriteLine("sk_set_game_path()");
 
-//Console.WriteLine($"Current PID: {Environment.ProcessId}");
 var steamInitResult = NativeMethods.SkSteamInit(
     "--REDACTED--", 
     "570460",
@@ -16,6 +12,15 @@ var steamInitResult = NativeMethods.SkSteamInit(
     0);
 
 Console.WriteLine($"sk_steam_init(): {steamInitResult}");
+
+for (var i = 0; i < 5; i++)
+{
+    Thread.Sleep(1000);
+    unsafe
+    {
+        _ = NativeMethods.SkTick(0x12345, &HandleEvent);
+    }
+}
 
 for (var i = 0; i < 30; i++)
 {
@@ -57,7 +62,7 @@ static void HandleEvent(IntPtr ctx, ushort eventType, nint eventPtr)
     }
 }
 
-static unsafe void Handle30(nint p)
+static void Handle30(nint p)
 {
     Console.WriteLine("    [0x30] - No payload");
 }
@@ -65,21 +70,58 @@ static unsafe void Handle30(nint p)
 static unsafe void Handle37(nint p)
 {
     var count = *(uint*)p;
+    var regionName = ReadAnsiString(p + 4);
+
+    // p = eventPtr + 0x08
+    // eventPtr + 0x110 = p + 0x108
+    var regionTable = *(nint*)(p + 0x108);
 
     Console.WriteLine($"    available_regions: {count}");
+    Console.WriteLine($"    selected_region: {regionName}");
+    Console.WriteLine($"    region_table: 0x{regionTable:X}");
 
-    var stringPtr = (byte*)p + sizeof(uint);
+    if (regionTable == 0)
+    {
+        Console.WriteLine("    region_table: NULL");
+        return;
+    }
 
-    var stringLength = 0;
+    for (var i = 0; i < count; i++)
+    {
+        var entry = regionTable + i * 0x10;
 
-    while (stringPtr[stringLength] != 0)
-        stringLength++;
+        var namePtr = *(nint*)entry;
+        var valueA = *(uint*)(entry + 0x08);
+        var valueB = *(uint*)(entry + 0x0C);
 
-    Console.WriteLine(
-        $"    default_region: {Marshal.PtrToStringAnsi((nint)stringPtr)}");
+        var name = ReadAnsiString(namePtr);
 
-    // Include the NUL terminator.
-    Hexdump(p, sizeof(uint) + stringLength + 1);
+        Console.WriteLine($"    region[{i}]:");
+        Console.WriteLine($"        name:   \"{name}\"");
+        Console.WriteLine($"        +0x08:  0x{valueA:X8} ({valueA})");
+        Console.WriteLine($"        +0x0C:  0x{valueB:X8} ({valueB})");
+    }
+}
+
+static unsafe string ReadAnsiString(nint address)
+{
+    if (address == 0)
+        return "<NULL>";
+
+    var ptr = (byte*)address;
+    var length = 0;
+
+    // Put a sanity limit on this so a bad pointer doesn't cause us
+    // to walk arbitrary memory forever.
+    const int maxLength = 0x1000;
+
+    while (length < maxLength && ptr[length] != 0)
+        length++;
+
+    if (length == maxLength)
+        return "<unterminated>";
+
+    return Marshal.PtrToStringAnsi(address, length) ?? "<NULL>";
 }
 
 static unsafe void Hexdump(nint p, int length)

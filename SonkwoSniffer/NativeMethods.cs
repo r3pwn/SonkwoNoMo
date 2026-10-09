@@ -26,8 +26,14 @@ internal static partial class NativeMethods
         string gameVersion,
         int isTestBuild);
 
+    [LibraryImport("MMClientSDK.dll", EntryPoint = "sk_select_region", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial uint SkSelectRegion(string region);
+
     [LibraryImport("MMClientSDK.dll", EntryPoint = "sk_tick")]
     internal static unsafe partial uint SkTick(
         nint eventContext,
         delegate* unmanaged<nint, ushort, nint, void> eventCallback);
+
+    [LibraryImport("MMClientSDK.dll", EntryPoint = "sk_get_region_list_ping_ttl")]
+    internal static unsafe partial uint SkGetRegionListPingTtl();
 }

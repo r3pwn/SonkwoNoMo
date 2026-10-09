@@ -3,6 +3,23 @@ using System.Runtime.InteropServices;
 
 namespace SonkwoNoMo.Client;
 
+[StructLayout(LayoutKind.Sequential)]
+public struct SkEvent
+{
+    public ushort Type;
+    public ushort Subtype;
+    public uint Field2;
+    public SkPayload Payload;
+}
+
+[StructLayout(LayoutKind.Explicit, Size = 0x200)]
+public unsafe struct SkPayload
+{
+    [FieldOffset(0)] public nint Pointer;
+
+    [FieldOffset(0)] public fixed byte Raw[0x200];
+}
+
 public class EventQueue
 {
     private readonly ConcurrentQueue<nint> _queue = new();
