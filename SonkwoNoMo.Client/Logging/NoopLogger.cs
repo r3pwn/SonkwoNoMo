@@ -1,6 +1,6 @@
-﻿namespace SonkwoNoMo.Client.Utils.Logging;
+﻿namespace SonkwoNoMo.Client.Logging;
 
-public class NoopLogger : ILogger
+internal class NoopLogger : ILogger
 {
     public void Start() { }
 

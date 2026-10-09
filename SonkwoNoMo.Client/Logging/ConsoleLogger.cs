@@ -1,8 +1,8 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace SonkwoNoMo.Client.Utils.Logging;
+namespace SonkwoNoMo.Client.Logging;
 
-public partial class ConsoleLogger : ILogger
+internal partial class ConsoleLogger : ILogger
 {
     [LibraryImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

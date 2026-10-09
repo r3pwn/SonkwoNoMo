@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text;
+using SonkwoNoMo.Client.Core;
+using SonkwoNoMo.Client.Interop;
+using SonkwoNoMo.Client.Logging;
 
-namespace SonkwoNoMo.Client;
+namespace SonkwoNoMo.Client.Services;
 
-public static unsafe class RegionList
+internal static class RegionService
 {
     public static string SelectedRegion = string.Empty;
     public static Region[] Regions = [];
@@ -14,6 +15,25 @@ public static unsafe class RegionList
     {
         // TODO: pull actual server list
         HandleServerListResponse();
+    }
+
+    public static async Task RefreshAndQueueEventAsync()
+    {
+        try
+        {
+            await Refresh();
+
+            ModuleState.Queue.Enqueue(
+                7,
+                0x37,
+                0,
+                AsPayload());
+        }
+        catch (Exception ex)
+        {
+            LoggerManager.Instance.Log(
+                $"[Error] Region refresh failed: {ex}");
+        }
     }
 
     private static void HandleServerListResponse()
@@ -30,7 +50,7 @@ public static unsafe class RegionList
         }
     }
 
-    public static SkPayload AsPayload()
+    public static unsafe SkPayload AsPayload()
     {
         var payload = new SkPayload();
 
@@ -58,7 +78,7 @@ public static unsafe class RegionList
         return payload;
     }
 
-    private static void WriteAscii(
+    private static unsafe void WriteAscii(
         byte* destination,
         int maxLength,
         string value)
@@ -72,7 +92,7 @@ public static unsafe class RegionList
         destination[bytes.Length] = 0;
     }
 
-    private static nint AllocAscii(string value)
+    private static unsafe nint AllocAscii(string value)
     {
         var bytes = Encoding.ASCII.GetBytes(value + "\0");
 
@@ -83,15 +103,7 @@ public static unsafe class RegionList
     }
 }
 
-[StructLayout(LayoutKind.Sequential)]
-public struct RegionEntry
-{
-    public nint Name;
-    public uint PingMs;
-    public uint ReqNum;
-}
-
-public record Region(
+internal record Region(
     string Name,
     string Host,
     uint PingMs,

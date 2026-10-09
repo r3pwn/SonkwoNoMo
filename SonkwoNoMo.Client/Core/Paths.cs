@@ -1,6 +1,6 @@
-﻿namespace SonkwoNoMo.Client.Utils;
+﻿namespace SonkwoNoMo.Client.Core;
 
-internal static class PathHelper
+internal static class Paths
 {
     public static string BasePath => GetBasePath();
 

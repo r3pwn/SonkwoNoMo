@@ -1,9 +1,11 @@
 ﻿using System.Runtime.InteropServices;
-using SonkwoNoMo.Client.Utils;
+using SonkwoNoMo.Client.Core;
+using SonkwoNoMo.Client.Logging;
+using SonkwoNoMo.Client.Services;
 
-namespace SonkwoNoMo.Client;
+namespace SonkwoNoMo.Client.Interop;
 
-public static class Exports
+internal static class NativeExports
 {
     [UnmanagedCallersOnly(EntryPoint = "sk_tick")]
     public static unsafe uint SkTick(nint eventContext, delegate* unmanaged<nint, ushort, SkEvent*, void> eventCallback)
@@ -51,7 +53,6 @@ public static class Exports
             ModuleState.BuildId = s3;
             ModuleState.GameVersion = s4;
             ModuleState.SteamInitialized = true;
-            // RegionList.Refresh();
 
             ModuleState.Queue.Enqueue(
                 7,
@@ -59,7 +60,7 @@ public static class Exports
                 1,
                 new SkPayload { Pointer = IntPtr.Zero });
 
-            _ = RefreshRegionsAndQueueEventAsync();
+            _ = RegionService.RefreshAndQueueEventAsync();
 
             return 0;
         }
@@ -97,7 +98,7 @@ public static class Exports
     public static int SkGetRegionListPingTtl()
     {
         LoggerManager.Instance.Log("sk_get_region_list_ping_ttl");
-        _ = RefreshRegionsAndQueueEventAsync();
+        _ = RegionService.RefreshAndQueueEventAsync();
 
         return 1;
     }
@@ -117,7 +118,7 @@ public static class Exports
             var regionStr = GetString(region);
             LoggerManager.Instance.Log($"sk_select_region: {regionStr}");
 
-            RegionList.SelectedRegion = regionStr;
+            RegionService.SelectedRegion = regionStr;
             return 0;
         }
         catch { return -1; }
@@ -142,25 +143,6 @@ public static class Exports
     {
         LoggerManager.Instance.Log("sk_create_party");
         return 0;
-    }
-
-    private static async Task RefreshRegionsAndQueueEventAsync()
-    {
-        try
-        {
-            await RegionList.Refresh();
-
-            ModuleState.Queue.Enqueue(
-                7,
-                0x37,
-                0,
-                RegionList.AsPayload());
-        }
-        catch (Exception ex)
-        {
-            LoggerManager.Instance.Log(
-                $"[Error] Region refresh failed: {ex}");
-        }
     }
 
     private static unsafe string GetString(byte* charPtr)

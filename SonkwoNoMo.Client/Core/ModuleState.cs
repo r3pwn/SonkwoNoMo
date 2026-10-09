@@ -1,4 +1,4 @@
-﻿namespace SonkwoNoMo.Client;
+﻿namespace SonkwoNoMo.Client.Core;
 
 internal static class ModuleState
 {

@@ -1,6 +1,6 @@
-﻿namespace SonkwoNoMo.Client.Utils.Logging;
+﻿namespace SonkwoNoMo.Client.Logging;
 
-public interface ILogger
+internal interface ILogger
 {
     public void Start();
 

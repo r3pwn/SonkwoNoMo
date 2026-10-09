@@ -1,13 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
 using SonkwoNoMo.Client.Config;
-using SonkwoNoMo.Client.Utils.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SonkwoNoMo.Client.Utils;
+namespace SonkwoNoMo.Client.Logging;
 
-public class LoggerManager
+internal class LoggerManager
 {
     private static readonly Lazy<ILogger> ConfigInstance = new(BuildLogger);
 
@@ -15,7 +14,7 @@ public class LoggerManager
 
     private static ILogger BuildLogger()
     {
-        var loggerType = ConfigManager.Instance.Logging.Output.ToLower();
+        var loggerType = ConfigLoader.Instance.Logging.Output.ToLower();
 
         ILogger log = loggerType switch
         {

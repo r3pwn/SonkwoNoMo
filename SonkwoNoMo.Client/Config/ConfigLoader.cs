@@ -1,10 +1,10 @@
 ﻿using System.Reflection;
 using Microsoft.Extensions.Configuration;
-using SonkwoNoMo.Client.Config;
+using SonkwoNoMo.Client.Core;
 
-namespace SonkwoNoMo.Client.Utils;
+namespace SonkwoNoMo.Client.Config;
 
-public class ConfigManager
+internal class ConfigLoader
 {
     private static readonly Lazy<RootConfigOptions> ConfigInstance = new(BuildConfiguration);
 
@@ -13,9 +13,9 @@ public class ConfigManager
     private static RootConfigOptions BuildConfiguration()
     {
         IConfigurationBuilder builder = new ConfigurationBuilder();
-        if (!string.IsNullOrEmpty(PathHelper.BasePath))
+        if (!string.IsNullOrEmpty(Paths.BasePath))
         {
-            builder = builder.SetBasePath(PathHelper.BasePath);
+            builder = builder.SetBasePath(Paths.BasePath);
         }
         var config = builder
             .AddIniFile("config.ini", optional: true, reloadOnChange: true)

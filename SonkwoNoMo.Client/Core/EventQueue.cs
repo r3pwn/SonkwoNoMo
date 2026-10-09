@@ -1,26 +1,10 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
+using SonkwoNoMo.Client.Interop;
 
-namespace SonkwoNoMo.Client;
+namespace SonkwoNoMo.Client.Core;
 
-[StructLayout(LayoutKind.Sequential)]
-public struct SkEvent
-{
-    public ushort Type;
-    public ushort Subtype;
-    public uint Field2;
-    public SkPayload Payload;
-}
-
-[StructLayout(LayoutKind.Explicit, Size = 0x200)]
-public unsafe struct SkPayload
-{
-    [FieldOffset(0)] public nint Pointer;
-
-    [FieldOffset(0)] public fixed byte Raw[0x200];
-}
-
-public class EventQueue
+internal class EventQueue
 {
     private readonly ConcurrentQueue<nint> _queue = new();
 

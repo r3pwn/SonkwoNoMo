@@ -1,6 +1,6 @@
 ﻿namespace SonkwoNoMo.Client.Config;
 
-public class LoggingOptions
+internal class LoggingOptions
 {
     public string Output { get; set; } = "None";
 }
