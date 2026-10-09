@@ -92,6 +92,7 @@ internal static class NativeExports
     {
         LoggerManager.Instance.Log("sk_destroy");
         LoggerManager.Instance.Stop();
+        RegionService.Shutdown();
     }
 
     [UnmanagedCallersOnly(EntryPoint = "sk_get_region_list_ping_ttl")]
