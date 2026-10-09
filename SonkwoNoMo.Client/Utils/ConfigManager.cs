@@ -12,8 +12,12 @@ public class ConfigManager
 
     private static RootConfigOptions BuildConfiguration()
     {
-        var config = new ConfigurationBuilder()
-            .SetBasePath(PathHelper.BasePath)
+        IConfigurationBuilder builder = new ConfigurationBuilder();
+        if (!string.IsNullOrEmpty(PathHelper.BasePath))
+        {
+            builder = builder.SetBasePath(PathHelper.BasePath);
+        }
+        var config = builder
             .AddIniFile("config.ini", optional: true, reloadOnChange: true)
             .Build();
 
