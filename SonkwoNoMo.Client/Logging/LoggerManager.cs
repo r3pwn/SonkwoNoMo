@@ -1,8 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using SonkwoNoMo.Client.Config;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using SonkwoNoMo.Client.Config;
 
 namespace SonkwoNoMo.Client.Logging;
 

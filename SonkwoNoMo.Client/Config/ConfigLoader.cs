@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using SonkwoNoMo.Client.Core;
 
 namespace SonkwoNoMo.Client.Config;
@@ -23,6 +22,7 @@ internal class ConfigLoader
 
         var userConfig = new RootConfigOptions();
         config.GetSection("Logging").Bind(userConfig.Logging);
+        config.GetSection("Gateway").Bind(userConfig.Gateway);
 
         return userConfig;
     }

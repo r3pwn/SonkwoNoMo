@@ -1,5 +1,8 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Net.NetworkInformation;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
+using SonkwoNoMo.Client.Config;
 using SonkwoNoMo.Client.Core;
 using SonkwoNoMo.Client.Interop;
 using SonkwoNoMo.Client.Logging;
@@ -8,6 +11,8 @@ namespace SonkwoNoMo.Client.Services;
 
 internal static class RegionService
 {
+    public static string SelectedRegion = string.Empty;
+
     // The region table and name buffers are allocated once and updated in
     // place on each refresh. The game may read them at any time, so they
     // are never freed or reallocated (only at module shutdown). Writes are
@@ -23,17 +28,20 @@ internal static class RegionService
     private static unsafe byte* _nameBuffers;
     private static int _count;
 
-    public static string SelectedRegion = string.Empty;
+    private static readonly HttpClient _client = new()
+    {
+        Timeout = TimeSpan.FromSeconds(5),
+    };
 
     public static async Task Refresh()
     {
-        // TODO: call the region list REST API and build the staging list
-        Region[] regions =
-        [
-            new("Offline", "invalid", 0, 25)
-        ];
+        var fetched = await FetchRegionsAsync();
 
-        // TODO: ping each region's host to determine the latency
+        // Gateway unreachable or returned no usable data: keep the game
+        // launchable with a local-only entry.
+        var regions = fetched is null
+            ? [new Region("Offline", "invalid", 0, 25)]
+            : await PingRegionsAsync(fetched);
 
         if (regions.Length == 0)
         {
@@ -173,6 +181,140 @@ internal static class RegionService
 
         _table = (byte*)NativeMemory.Alloc((nuint)(MaxRegions * Marshal.SizeOf<RegionEntry>()));
         _nameBuffers = (byte*)NativeMemory.Alloc(MaxRegions * NameBufferSize);
+    }
+
+    private static async Task<Region[]?> FetchRegionsAsync()
+    {
+        try
+        {
+            var gateway = ConfigLoader.Instance.Gateway;
+            using var response = await _client.GetAsync(
+                $"http://{gateway.Host}:{gateway.Port}/api/get_region_list");
+
+            if (response is not { IsSuccessStatusCode: true })
+            {
+                return null;
+            }
+
+            var payload = await response.Content.ReadAsByteArrayAsync();
+            XorInPlace(payload);
+
+            using var document = JsonDocument.Parse(payload);
+            var root = document.RootElement;
+
+            var accInfo = root.TryGetProperty("acc_info", out var accInfoProp)
+                ? accInfoProp.GetString()
+                : null;
+
+            if (root.TryGetProperty("all_region", out var allRegions) is false ||
+                allRegions.ValueKind is not JsonValueKind.Array)
+            {
+                return null;
+            }
+
+            var regions = new List<Region>();
+
+            foreach (var entry in allRegions.EnumerateArray())
+            {
+                var region = entry.ValueKind is JsonValueKind.Object
+                    ? BuildRegion(entry, accInfo)
+                    : null;
+
+                if (region is not null)
+                {
+                    regions.Add(region);
+                }
+            }
+
+            return regions.Count > 0 ? [.. regions] : null;
+        }
+        catch (Exception ex)
+        {
+            LoggerManager.Instance.Log($"[Warning] Region list fetch failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    private static Region? BuildRegion(JsonElement entry, string? accInfo)
+    {
+        var raw = entry.TryGetProperty("region", out var regionProp)
+            ? regionProp.GetString()
+            : null;
+
+        var reqNum = entry.TryGetProperty("request_num", out var reqNumProp)
+            && reqNumProp.ValueKind is JsonValueKind.Number
+            ? (uint)reqNumProp.GetInt32()
+            : 25u;
+
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+
+        // Entries are "Name|Host:Port"; without a '|' the shared acc_info
+        // endpoint is the host and the whole string is the display name.
+        var separator = raw.LastIndexOf('|');
+        var name = (separator >= 0 ? raw[..separator] : raw).Trim();
+        var host = ((separator >= 0 ? raw[(separator + 1)..] : accInfo) ?? string.Empty).Trim();
+
+        if (string.IsNullOrEmpty(host))
+        {
+            return null;
+        }
+
+        if (string.IsNullOrEmpty(name))
+        {
+            name = host;
+        }
+
+        return new Region(name, host, uint.MaxValue, reqNum);
+    }
+
+    private static async Task<Region[]> PingRegionsAsync(Region[] regions)
+    {
+        var pings = regions.Select(async region =>
+        {
+            var pingMs = await MeasurePingMsAsync(region.Host);
+            return region with { PingMs = pingMs };
+        });
+
+        return await Task.WhenAll(pings);
+    }
+
+    private static async Task<uint> MeasurePingMsAsync(string hostPort)
+    {
+        // The ICMP echo goes to the host, so the port is stripped off.
+        var separator = hostPort.LastIndexOf(':');
+        var host = (separator >= 0 ? hostPort[..separator] : hostPort).Trim();
+
+        if (string.IsNullOrEmpty(host))
+        {
+            return uint.MaxValue;
+        }
+
+        using var ping = new Ping();
+
+        try
+        {
+            var reply = await ping.SendPingAsync(host, 2000);
+            return reply.Status is IPStatus.Success
+                ? (uint)reply.RoundtripTime
+                : uint.MaxValue;
+        }
+        catch
+        {
+            return uint.MaxValue;
+        }
+    }
+
+    // The gateway obfuscates responses with a rolling XOR; applying the same
+    // operation again restores the payload.
+    private static void XorInPlace(byte[] data)
+    {
+        for (var i = 0; i < data.Length; i++)
+        {
+            data[i] ^= (byte)((i % 7) + 1);
+        }
     }
 }
 
