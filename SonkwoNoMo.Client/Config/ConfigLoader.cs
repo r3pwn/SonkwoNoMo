@@ -17,7 +17,7 @@ internal class ConfigLoader
             builder = builder.SetBasePath(Paths.BasePath);
         }
         var config = builder
-            .AddIniFile("config.ini", optional: true, reloadOnChange: true)
+            .AddIniFile("config.ini", optional: true, reloadOnChange: false)
             .Build();
 
         var userConfig = new RootConfigOptions();
