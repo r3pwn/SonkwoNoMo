@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
 	<NativeLib>Shared</NativeLib>
 	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
